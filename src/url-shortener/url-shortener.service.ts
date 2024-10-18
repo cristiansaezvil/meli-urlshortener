@@ -19,7 +19,9 @@ export class UrlShortenerService {
 
     entity.id = keys.id;
     entity.urlShort = keys.url;
-    entity.count = 0;
+    entity.clickCount = 0;
+    entity.createdAt = new Date();
+    entity.updatedAt = entity.createdAt;
 
     let x = await this.redisService.set(keys.id, entity);
     return entity;
@@ -53,8 +55,7 @@ export class UrlShortenerService {
     return await this.redisService.delete(id);
   }
 
-  async countLink(urlShort: URL): Promise<URL> {
-    let urlRedirect: URL = new URL(urlShort);
+  async countLink(urlRedirect: URL): Promise<URL> {
     let id: string = urlRedirect.pathname.slice(1);
     let urlShortener: UrlShortener = await this.findOne(id);
     if (!urlShortener)
@@ -62,7 +63,8 @@ export class UrlShortenerService {
     else if (urlShortener.status == 'DISABLED')
       throw new UrlShortError(`URL is disabled!`);
 
-    urlShortener.count++;
+    urlShortener.clickCount++;
+    urlShortener.clickLastDate = new Date();
     this.redisService.set(id, urlShortener);
     return urlShortener.url;
   }

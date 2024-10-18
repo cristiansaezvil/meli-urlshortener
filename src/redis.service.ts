@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import * as Redis from 'ioredis';
 import { UrlShortener } from './url-shortener/entities/url-shortener.entity';
-import { UrlShortError } from './urlshort.error';
 
 @Injectable()
 export class RedisService {
@@ -10,20 +9,25 @@ export class RedisService {
 
     constructor() {
         this.client = new Redis.Redis({
-            host: 'localhost',
-            port: 6379
+            host: process.env.REDIS_HOST,
+            port: parseInt(process.env.REDIS_PORT, 10)
         });
     }
 
     async set(key: string, value: UrlShortener): Promise<void> {
-        value.createdAt = new Date();
-        value.updatedAt = value.createdAt;
         await this.client.set(key, JSON.stringify(value));
     }
 
     async get(key: string): Promise<UrlShortener | undefined> {
-        let entityJson: string = await this.client.get(key);
-        return JSON.parse(entityJson);
+        try {
+            let entityJson: UrlShortener = JSON.parse(await this.client.get(key));
+            return entityJson;
+        } catch (e) {
+            if (e instanceof SyntaxError) {
+                console.error(`Unexpected data in the database, the record has an invalid format.`);
+                return undefined;
+            }
+        }
     }
 
     async delete(key: string): Promise<void> {

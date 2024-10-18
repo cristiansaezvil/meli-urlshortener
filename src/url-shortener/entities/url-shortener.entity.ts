@@ -7,7 +7,8 @@ export class UrlShortener {
     url: URL;
     owner: UUID;
     status: string;
-    count: number;
+    clickCount: number;
+    clickLastDate: Date;
     createdAt: Date;
     updatedAt: Date;
     
